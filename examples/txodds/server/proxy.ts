@@ -27,16 +27,12 @@ import { assertDevnet } from '@pay/agent-runtime'
 import { analyzeEdge } from '../agent/edge.js'
 import { makeProgram, deposit, release, escrowPda } from '../agent/escrow.js'
 
-const PROGRAM = new PublicKey('6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J')
-const MINT = new PublicKey('4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG') // real treasury mint
-const BASE = process.env.TXLINE_BASE_URL ?? 'https://txline-dev.txodds.com'
-const RPC = process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com'
-const PORT = Number(process.env.PORT ?? 8801)
 // fileURLToPath (not .pathname) so the repo-root .env resolves on macOS/Linux too, not just Windows.
 const ENV_PATH = process.env.KIT_ENV ?? fileURLToPath(new URL('../../../.env', import.meta.url))
 
-// Pull LLM + seller keys from the repo .env so /api/edge can call the model and /api/settle can pay.
-// (Existing process.env wins, so a shell override still takes precedence.)
+// Load the repo .env into process.env FIRST — before the constants below — so .env can override the
+// program/mint/host, not just keys. A shell env var still wins (we only fill what's undefined). This is
+// the single .env read; everything else reads process.env.
 ;(function loadEnv() {
   try {
     for (const line of fs.readFileSync(ENV_PATH, 'utf8').split('\n')) {
@@ -46,13 +42,20 @@ const ENV_PATH = process.env.KIT_ENV ?? fileURLToPath(new URL('../../../.env', i
   } catch { /* no .env — rely on the shell env */ }
 })()
 
+// TxLINE devnet ids — overridable via .env (TXLINE_PROGRAM / TXLINE_MINT) so a TxODDS rotation is a
+// config change, not a code edit. Defaults are the values verified working on devnet (2026-06).
+const PROGRAM = new PublicKey(process.env.TXLINE_PROGRAM ?? '6pW64gN1s2uqjHkn1unFeEjAwJkPGHoppGvS715wyP2J')
+const MINT = new PublicKey(process.env.TXLINE_MINT ?? '4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG') // treasury mint
+const BASE = process.env.TXLINE_BASE_URL ?? 'https://txline-dev.txodds.com'
+const RPC = process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com'
+const PORT = Number(process.env.PORT ?? 8801)
+
 const expl = (kind: 'tx' | 'address', id: string) => `https://explorer.solana.com/${kind}/${id}?cluster=devnet`
 
 function buyerKeypair(): Keypair {
-  const txt = fs.readFileSync(ENV_PATH, 'utf8')
-  const m = txt.match(/^BUYER_KEYPAIR_B58=(.+)$/m)
-  if (!m) throw new Error(`BUYER_KEYPAIR_B58 not in ${ENV_PATH}`)
-  return Keypair.fromSecretKey(bs58.decode(m[1].trim()))
+  const b58 = process.env.BUYER_KEYPAIR_B58 // loaded from .env above (or the shell)
+  if (!b58) throw new Error(`BUYER_KEYPAIR_B58 not set (looked in ${ENV_PATH})`)
+  return Keypair.fromSecretKey(bs58.decode(b58.trim()))
 }
 
 let jwt = ''
@@ -149,23 +152,28 @@ async function board(): Promise<any[]> {
 }
 
 /**
- * Run a real devnet escrow deposit→release so the demo can link the settlement on-chain. Self-pays
- * (seller defaults to the buyer wallet) so ONE funded wallet is enough; set SELLER_WALLET to pay a
- * distinct seller. Returns {ok:false,error} on any failure so the UI can fall back gracefully.
+ * Run a real devnet escrow deposit→release so the demo can link the settlement on-chain. The seller is
+ * a distinct party (`SELLER_WALLET` / `WALLET`, set by setup.js); if neither is set it self-pays the
+ * buyer so a one-wallet demo still works (`selfPay:true` is surfaced so the UI can flag it). Returns
+ * {ok:false,error} on any failure so the UI can fall back gracefully.
  */
 async function settle(amountSol: number): Promise<unknown> {
   try {
     const buyer = buyerKeypair()
-    // pay the kit's seller wallet if present (set by setup.js), else self-pay so one funded wallet suffices.
-    const seller = new PublicKey(process.env.SELLER_WALLET || process.env.WALLET || buyer.publicKey.toBase58())
+    const sellerEnv = process.env.SELLER_WALLET || process.env.WALLET
+    const seller = new PublicKey(sellerEnv || buyer.publicKey.toBase58())
+    const selfPay = seller.equals(buyer.publicKey)
     const reference = Keypair.generate().publicKey
-    const amount = Math.max(0.0001, Number.isFinite(amountSol) ? amountSol : 0.0005)
+    // floor at the rent-exempt minimum (~0.00089 SOL) so paying a brand-new seller in one release
+    // leaves it rent-exempt; below that the release is rejected ("insufficient funds for rent").
+    const amount = Math.max(0.001, Number.isFinite(amountSol) ? amountSol : 0.001)
     const program = await makeProgram(buyer, RPC)
     const depositSig = await deposit(program, buyer, seller, reference, amount, 600)
     const releaseSig = await release(program, buyer, seller, reference)
     const pda = escrowPda(buyer.publicKey, reference).toBase58()
     return {
       ok: true, amountSol: amount, reference: reference.toBase58(),
+      buyer: buyer.publicKey.toBase58(), seller: seller.toBase58(), selfPay,
       deposit: { sig: depositSig, explorer: expl('tx', depositSig) },
       release: { sig: releaseSig, explorer: expl('tx', releaseSig) },
       escrow: { pda, explorer: expl('address', pda) },

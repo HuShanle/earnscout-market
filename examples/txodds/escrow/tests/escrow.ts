@@ -6,7 +6,7 @@
  *   ANCHOR_WALLET=$HOME/.config/solana/id.json \
  *   npx ts-mocha -p ./tsconfig.json -t 1000000 tests/escrow.ts
  *
- * Covers the full lifecycle and the security constraints that make the escrow trustless:
+ * Covers the full lifecycle and the security constraints the escrow depends on:
  *   - deposit → release pays the seller (and only the seller)
  *   - a WRONG seller cannot release (has_one)
  *   - refund is rejected before the deadline, allowed after

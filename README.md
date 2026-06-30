@@ -1,13 +1,19 @@
 # World Cup Oracle — verified sports data, settled on Solana
 
-> An **LLM agent** that sells a **verified TxODDS World Cup edge** — live, de-margined odds turned into
-> a one-line value call — and settles every delivery **trustlessly through a Solana escrow contract**.
-> Reason · deliver · settle on-chain.
+> An **LLM agent** that sells a **verified TxODDS World Cup fair line** — live, de-margined odds turned
+> into fair (break-even) prices + a one-line read — and settles every delivery through a **Solana escrow
+> contract** on devnet. Reason · deliver · settle on-chain.
 
-The agent fetches verified de-margined World Cup odds on **devnet**, turns them into a one-line value
-call with confidence, and on delivery the buyer escrow **settles automatically** — a real
-deposit→release you can open on the Solana Explorer. Everything runs on devnet: free play money, real
-on-chain settlement. A forkable React dashboard renders the live board.
+The agent fetches verified de-margined World Cup odds on **devnet**, turns each probability into its
+fair (break-even) decimal odds plus a one-line read, and on delivery the buyer escrow **settles
+automatically** — a real deposit→release you can open on the Solana Explorer. Everything runs on devnet:
+free play money, real on-chain settlement. A forkable React dashboard renders the live board.
+
+> **What the escrow does (and doesn't):** it's **escrow-protected, buyer-released** settlement — the
+> buyer deposits, releases on delivery, and can refund after a deadline. It protects the **buyer**; the
+> seller isn't yet protected on-chain (a buyer could take delivery and refund). The fix is an **arbiter**
+> instruction — see [`escrow/contract_extension.md`](examples/txodds/escrow/contract_extension.md). Don't
+> read "trustless both ways" into the shipped contract.
 
 ## The three pillars
 
@@ -16,11 +22,11 @@ Each one is load-bearing — pull it and the demo collapses into something lesse
 | Pillar | Its job | Remove it → |
 |--------|---------|-------------|
 | **Verified data (TxODDS)** | the proxy subscribes a devnet wallet to the free World Cup tier and fetches live, de-margined 1X2 odds | unverifiable numbers |
-| **LLM** | turns the verified odds into a one-line value call + confidence — the sellable product | a static odds board |
+| **LLM** | turns the verified fair line into fair (break-even) odds + a one-line read — the sellable product | a static odds board |
 | **Solana escrow** | a `reference` binds the deal; on delivery the buyer deposits and releases SOL to the seller (refundable after a deadline) | trust-me play money |
 
-The product is the [`analyzeEdge()`](examples/txodds/agent/edge.ts) transform — verified odds → an LLM
-call — shared between the proxy and the agent. That, and [`deliverService()`](examples/txodds/agent/service.ts),
+The product is the [`analyzeEdge()`](examples/txodds/agent/edge.ts) transform — verified odds → the fair
+line + a read — shared between the proxy and the agent. That, and [`deliverService()`](examples/txodds/agent/service.ts),
 are where you'd add your own.
 
 ## Prerequisites
@@ -92,6 +98,11 @@ numbers. Without live data it falls back to a clearly-labelled demo board.
   call, and the settlement links.
 
 ## Under the hood — the runtime
+
+> **Single agent, by the way.** `npm run dev` runs **one** agent (the oracle): proxy + web. The
+> bidding/competing/AWARD "agent market" lives in the `coral/` + `market/` modules below and is
+> **unit-tested but not launched** by the demo — it's scaffolding to grow into a multi-agent market,
+> not something running at runtime. The repo name (`solana_coralOS`) hints at more than the demo ships.
 
 The agent imports [`packages/agent-runtime`](packages/agent-runtime) and writes only behaviour. Four
 modules, one per concern:

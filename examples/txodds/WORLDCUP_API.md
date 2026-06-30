@@ -22,8 +22,8 @@ verified data (TxLINE)  →  reasoning (LLM edge)  →  settlement (Solana escro
 ```
 
 - **Sticking to one real API is the demo's integrity.** "An agent sells *verified* World Cup data and
-  gets paid trustlessly" only lands if the data is genuinely TxODDS. The moment you bolt on a second
-  source or a mock, the story becomes "a dashboard," not "an oracle."
+  is paid on-chain through escrow" only lands if the data is genuinely TxODDS. The moment you bolt on a
+  second source or a mock, the story becomes "a dashboard," not "an oracle."
 - **It's a reason to keep paying.** A live, moving, token-gated feed is something an agent will *re-buy*
   — that's the recurring-micropayment economy the kit is about. A one-shot static fetch isn't.
 - **Depth sells.** The same TxLINE snapshots already carry more than we surface today (multiple markets,

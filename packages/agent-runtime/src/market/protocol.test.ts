@@ -32,10 +32,10 @@ describe('AWARD + ESCROW_REQUIRED round-trip', () => {
   it('AWARD', () => {
     expect(parseAward(formatAward(9, 'seller-cheap'))).toEqual({ round: 9, to: 'seller-cheap' })
   })
-  it('AWARD carries an optional reason', () => {
+  it('AWARD round-trips the optional reason', () => {
     const msg = formatAward(9, 'seller-cheap', 'best value')
     expect(msg).toContain('reason="best value"')
-    expect(parseAward(msg)).toEqual({ round: 9, to: 'seller-cheap' })
+    expect(parseAward(msg)).toEqual({ round: 9, to: 'seller-cheap', reason: 'best value' })
   })
   it('ESCROW_REQUIRED', () => {
     const t = { round: 9, reference: 'R3f', seller: 'SeLLeRwa11et', amountSol: 0.0006, deadlineSecs: 600 }

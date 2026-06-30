@@ -3,7 +3,7 @@
 // odds, inlined). If the proxy/token isn't up it shows a clearly-labelled demo board; it never mixes
 // demo numbers into a live fixture.
 
-import React, { useState, useEffect, useMemo } from 'https://esm.sh/react@18.3.1'
+import React, { useState, useEffect } from 'https://esm.sh/react@18.3.1'
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client'
 import htm from 'https://esm.sh/htm@3.1.1'
 
@@ -96,7 +96,11 @@ const clientEdge = (fx) => {
   return { fixtureId: String(fx.FixtureId), teams, market: { names: m.PriceNames, pct: m.Pct }, fair, analysis: clientRead(fair), demo: !live }
 }
 const ESCROW_PROGRAM = 'R5NWNg9eRLWWQU81Xbzz5Du1k7jTDeeT92Ty6qCeXet'
-const SETTLE_SOL = 0.0005
+// ≥ the rent-exempt minimum (~0.00089 SOL) so the release makes a brand-new seller account rent-exempt
+// in one shot — otherwise the first payout to a fresh wallet is rejected ("insufficient funds for rent").
+const SETTLE_SOL = 0.001
+const shortAddr = (a) => (a ? `${String(a).slice(0, 4)}…${String(a).slice(-4)}` : '')
+const addrLink = (a) => `https://explorer.solana.com/address/${a}?cluster=devnet`
 
 // ── odds board ──────────────────────────────────────────────────────────────
 // LIVE TxODDS markets are messy: Pct values arrive as strings ("41.946"), some priced "NA",
@@ -137,7 +141,6 @@ function Board({ fixture, odds, loading }) {
           <span class="odds">${fmtOdds(pct[i])}</span>
         </div>`)}
       <div class="edge">
-        <span class="e-ico">🎯</span>
         <span class="e-text"><b>${favLabel}</b> — verified favourite at <b>${fmt(pct[favI])}%</b> · fair price <b>${fmtOdds(pct[favI])}</b>
           <div class="e-sub">fair (break-even) odds = 100 ÷ probability — a bet only has value ABOVE this price</div>
         </span>
@@ -167,7 +170,7 @@ function EdgeCard({ edge }) {
   const det = /deterministic/i.test(a.note || '')
   return html`
     <div class="edgecard">
-      <div class="ec-head"><span class="ec-tag">🤖 agent's read</span>
+      <div class="ec-head"><span class="ec-tag">agent's read</span>
         <span class=${'ec-badge' + (det ? '' : ' llm')}>${det ? 'deterministic' : 'LLM'}</span></div>
       <p class="ec-call">${a.call}</p>
       ${fav && html`
@@ -188,15 +191,15 @@ function EdgeCard({ edge }) {
 function Pipeline({ edge, source, settleRes }) {
   const fav = edge?.fair?.favourite
   const steps = [
-    { n: 1, icon: '📡', title: 'Verified data',
+    { n: 1, title: 'Verified data',
       desc: 'TxODDS de-margined World Cup odds — true-probability estimates with the bookmaker margin stripped out — fetched over a token-gated subscription on Solana devnet.',
       live: fav ? `${fav.label} ${fav.pct.toFixed(0)}%` : (source === 'live' ? 'live' : 'sample') },
-    { n: 2, icon: '🧮', title: 'Fair line + price to beat',
+    { n: 2, title: 'Fair line + price to beat',
       desc: 'The agent turns each probability into its fair (break-even) decimal odds = 100 ÷ probability — the price a sportsbook must beat for a bet to have value — plus a one-line LLM read.',
       live: fav ? `fair odds ${fav.fairOdds.toFixed(2)}` : '—' },
-    { n: 3, icon: '⛓️', title: 'Settled on-chain',
-      desc: 'The buyer pays the agent for that read through a Solana escrow (deposit → release), automatically on delivery and refundable after a deadline.',
-      live: settleRes?.ok ? `${settleRes.amountSol} SOL ✓` : `${SETTLE_SOL} SOL` },
+    { n: 3, title: 'Settled on-chain',
+      desc: 'The buyer deposits SOL into a per-order escrow and releases it to the seller on delivery (refundable by the buyer after a deadline). Real devnet transactions, linked on Explorer.',
+      live: settleRes?.ok ? `${settleRes.amountSol} SOL settled` : `${SETTLE_SOL} SOL` },
   ]
   return html`
     <section class="pipeline">
@@ -204,7 +207,7 @@ function Pipeline({ edge, source, settleRes }) {
       <div class="pipe-steps">
         ${steps.map((s, i) => html`
           <div class="pipe-step" key=${s.n}>
-            <div class="pipe-h"><span class="pipe-ico">${s.icon}</span><span class="pipe-n">0${s.n}</span><span class="pipe-live">${s.live}</span></div>
+            <div class="pipe-h"><span class="pipe-n">0${s.n}</span><span class="pipe-live">${s.live}</span></div>
             <h4>${s.title}</h4>
             <p>${s.desc}</p>
             ${i < 2 && html`<span class="pipe-arrow">→</span>`}
@@ -213,68 +216,26 @@ function Pipeline({ edge, source, settleRes }) {
     </section>`
 }
 
-// the settlement pillar — a real devnet escrow deposit→release, linked on Explorer
+// the settlement: a real devnet escrow deposit→release between two distinct parties, linked on Explorer
 function SettleResult({ r }) {
   if (r.ok) return html`
-    <div class="settled ok">💸 settled <b>${r.amountSol} SOL</b> on devnet —
-      <a href=${r.deposit.explorer} target="_blank" rel="noreferrer">deposit ↗</a> ·
-      <a href=${r.release.explorer} target="_blank" rel="noreferrer">release ↗</a> ·
-      <a href=${r.escrow.explorer} target="_blank" rel="noreferrer">escrow PDA ↗</a></div>`
-  return html`
-    <div class="settled sim">⚠ live settle unavailable${r.error ? ` (${String(r.error).slice(0, 70)})` : ''} —
-      needs a funded devnet buyer wallet (.env). See the
-      <a href=${`https://explorer.solana.com/address/${ESCROW_PROGRAM}?cluster=devnet`} target="_blank" rel="noreferrer">escrow program ↗</a></div>`
-}
-
-// ── "Eight Layers" tab — the architecture, mapped to THIS demo ───────────────
-const LAYERS = [
-  { n: 1, icon: '🖥️', title: 'Frontend', tag: 'this page',
-    what: 'A React dashboard rendering the live board — verified odds, the agent’s reasoning, settlement links. Forkable, no build step.',
-    here: 'This board — examples/txodds/web, a no-build React app talking only to the local proxy.' },
-  { n: 2, icon: '🧩', title: 'The service', tag: 'new code',
-    what: 'deliverService() is the body of a paid endpoint. Return a string; it’s sold automatically. The main fork.',
-    here: 'The txline edge — analyzeEdge() turns verified odds into the call you see on the board.' },
-  { n: 3, icon: '🎭', title: 'The seller persona', tag: 'config',
-    what: 'Cost floor, inventory, LLM strategy — a specialist that sells one thing well, or a generalist. All config.',
-    here: 'This oracle is one specialist: the World Cup edge. FLOOR_SOL sets the price; agent/service.ts the goods.' },
-  { n: 4, icon: '🛒', title: 'The buyer', tag: 'env',
-    what: 'Decides what to buy and funds it inside a code-enforced budget, then settles the order on-chain.',
-    here: 'The buyer wallet funds the escrow and releases on delivery; the runtime’s market/ adds best-value selection.' },
-  { n: 5, icon: '🔒', title: 'Solana Pay + escrow', tag: 'unchanged',
-    what: 'A unique reference binds the deal; pays on release, refunds after a deadline. Set the price, tier it, swap SOL for USDC.',
-    here: 'The agent delivers its call and the buyer escrow settles on its own — a real devnet deposit→release, linked on Explorer.' },
-  { n: 6, icon: '🕸️', title: 'New agents', tag: 'optional',
-    what: 'Drop one in and a pair becomes a graph: an arbiter, a reseller, an oracle paid to verify another’s work.',
-    here: 'Not shipped here — the runtime’s coral/ + market/ modules are the rails to grow this one agent into a market.' },
-  { n: 7, icon: '⚙️', title: 'The runtime', tag: 'unchanged',
-    what: 'CoralOS client, Solana Pay, provider-modular LLM shim + the market protocol. Import them, write behavior.',
-    here: 'packages/agent-runtime — imported unchanged; this demo only writes behavior on top.' },
-  { n: 8, icon: '⛓️', title: 'The contract', tag: 'unchanged',
-    what: 'The escrow program (the only Rust). The settlement spine, not an afterthought.',
-    here: 'Devnet-deployed; the Settle button calls initialize→release. Add an arbitrate instruction to extend.' },
-]
-const tagSlug = (t) => 't-' + t.replace(/\s+/g, '-')
-
-function LayersTab() {
-  return html`
-    <main>
-      <h3 class="grid-title">Eight layers, all yours to change</h3>
-      <p class="layers-intro">The rails are done — coordination, LLM bidding, trustless settlement. Everything you change sits on
-        top. For this World Cup oracle, <b>only #2 (the service) is real new code</b> — the rest is config, env, or untouched rails.</p>
-      <div class="layers">
-        ${LAYERS.map((l) => html`
-          <div class="layer" key=${l.n}>
-            <div class="layer-top">
-              <span class="layer-ico">${l.icon}</span>
-              <span class="layer-n">${String(l.n).padStart(2, '0')}</span>
-              <span class=${'layer-tag ' + tagSlug(l.tag)}>${l.tag}</span>
-            </div>
-            <h4 class="layer-title">${l.title}</h4>
-            <p class="layer-what">${l.what}</p>
-            <p class="layer-here"><span>in this demo</span> ${l.here}</p>
-          </div>`)}
+    <div class="settled ok">
+      <div class="settled-line">settled <b>${r.amountSol} SOL</b> on devnet — buyer
+        <a href=${addrLink(r.buyer)} target="_blank" rel="noreferrer">${shortAddr(r.buyer)}</a>
+        <span class="settled-arrow">→</span> seller
+        <a href=${addrLink(r.seller)} target="_blank" rel="noreferrer">${shortAddr(r.seller)}</a>
+        ${r.selfPay && html`<span class="settled-note">self-pay — set a distinct SELLER_WALLET to split the parties</span>`}
       </div>
-    </main>`
+      <div class="settled-line links">
+        <a href=${r.deposit.explorer} target="_blank" rel="noreferrer">deposit ↗</a> ·
+        <a href=${r.release.explorer} target="_blank" rel="noreferrer">release ↗</a> ·
+        <a href=${r.escrow.explorer} target="_blank" rel="noreferrer">escrow PDA ↗</a>
+      </div>
+    </div>`
+  return html`
+    <div class="settled sim">live settle unavailable${r.error ? ` (${String(r.error).slice(0, 70)})` : ''} —
+      needs a funded devnet buyer wallet (.env). See the
+      <a href=${addrLink(ESCROW_PROGRAM)} target="_blank" rel="noreferrer">escrow program ↗</a></div>`
 }
 
 function App() {
@@ -286,7 +247,6 @@ function App() {
   const [edge, setEdge] = useState(null)
   const [settleRes, setSettleRes] = useState(null)
   const [settling, setSettling] = useState(false)
-  const [tab, setTab] = useState('oracle')
   const selected = fixtures ? fixtures[idx] : null
 
   // load the board: fixtures with verified live odds (inlined). The free World Cup tier's odds are
@@ -355,28 +315,15 @@ function App() {
 
   const select = (fx) => setIdx(fixtures.findIndex((f) => f.FixtureId === fx.FixtureId))
 
-  const comps = useMemo(() => fixtures ? new Set(fixtures.map((f) => f.Competition)).size : 0, [fixtures])
-
   return html`
     <header class="hero">
       <span class=${'kicker' + (source === 'demo' ? ' demo' : '')}>
         <span class="dot"></span>${source === 'demo' ? 'sample fixtures · live odds quiet' : 'live · devnet · free World Cup tier'}
       </span>
-      <h1><span class="trophy">🏆</span> World Cup Oracle</h1>
+      <h1>World Cup Oracle</h1>
       <p class="tagline">An agent sells <b>verified</b> TxODDS odds: it fetches the de-margined fair line on Solana devnet,
         turns it into <b>fair (break-even) odds + a plain read</b>, and gets paid through an on-chain escrow.</p>
-      <div class="stats">
-        <div class="stat"><b>${fixtures ? fixtures.length : '—'}</b><span>fixtures</span></div>
-        <div class="stat"><b>de-margined</b><span>fair line</span></div>
-        <div class="stat"><b>100÷p</b><span>break-even odds</span></div>
-        <div class="stat"><b>SOL</b><span>escrow-settled</span></div>
-      </div>
-      <nav class="tabs">
-        <button class=${'tab' + (tab === 'oracle' ? ' on' : '')} onClick=${() => setTab('oracle')}>🏆 Oracle</button>
-        <button class=${'tab' + (tab === 'layers' ? ' on' : '')} onClick=${() => setTab('layers')}>🧱 Eight Layers</button>
-      </nav>
     </header>
-    ${tab === 'layers' ? html`<${LayersTab} />` : html`
     <main>
       <${Pipeline} edge=${edge} source=${source} settleRes=${settleRes} />
       ${!fixtures && html`<p class="muted" style=${{ textAlign: 'center' }}>loading fixtures…</p>`}
@@ -415,7 +362,7 @@ function App() {
         : source === 'demo'
           ? 'live World Cup odds are quiet right now — showing sample fixtures; the board switches to live automatically when they return'
           : 'connecting to the live proxy…'}</p>
-    </footer>`}`
+    </footer>`
 }
 
 createRoot(document.getElementById('root')).render(html`<${App} />`)

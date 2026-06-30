@@ -19,14 +19,18 @@ settlement**:
 
 ```
 buyer deposits SOL into a per-order escrow PDA      (funds locked on-chain)
-seller delivers the service                          (off-chain, over CoralOS)
+seller delivers the service                          (off-chain)
 buyer releases  → seller is paid                     (buyer confirms delivery)
    …or…
 deadline passes → buyer refunds                      (seller never delivered)
 ```
 
-Neither side can cheat the protocol: the seller can't take funds without a release; the buyer can't
-claw back funds before the deadline once a release happens.
+**This protects the buyer, not (yet) the seller.** The seller can't take funds without a `release`, and
+the buyer can't claw back funds before the deadline. But only the **buyer** signs `release`/`refund`, so
+a malicious buyer can take delivery, sit out the deadline, and `refund` — the seller delivered for
+nothing. The shipped contract is **escrow-protected and buyer-released**, *not* trustless both ways. The
+fix is an **arbiter** (a third signer that can release-to-seller or refund-to-buyer on dispute) — see
+[`contract_extension.md`](contract_extension.md). Don't read more into "settlement spine" than that.
 
 ---
 
@@ -132,10 +136,10 @@ build them (Anchor scaffolding, LiteSVM tests, Codama client generation, the sec
 
 ## The honest trade-off
 
-- **Gain:** trustless settlement — the headline thing a real agent marketplace needs, which is why
-  it's the spine and not an add-on.
+- **Gain:** escrow-protected, buyer-released settlement — conditional, refundable funds instead of
+  pay-and-pray. (Trustless *both* ways needs the arbiter above; the shipped contract protects the buyer.)
 - **Cost:** it's **Rust**, the one place the kit leaves "TypeScript end-to-end", and it adds a
-  build/deploy toolchain — the price of trustless settlement.
-- **Middle ground:** if you only want **price stability** (not trustlessness), escrow is overkill —
-  accept **USDC** via SPL token transfers in the TS flow. Escrow is specifically about *trust*, not
-  tokens.
+  build/deploy toolchain — the price of on-chain settlement.
+- **Middle ground:** if you only want **price stability** (not conditional settlement), escrow is
+  overkill — accept **USDC** via SPL token transfers in the TS flow. Escrow is specifically about
+  *conditional release*, not tokens.

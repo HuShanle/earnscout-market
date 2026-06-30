@@ -1,10 +1,13 @@
-//! Agent-economy escrow — the trustless **settlement spine** of the marketplace.
+//! Escrow — the **settlement spine** of the demo: escrow-protected, buyer-released settlement.
 //!
-//! LLM seller agents compete for a buyer's business over CoralOS (MCP); the winning bid settles
-//! **here, not on trust**. A buyer **deposits** SOL into a per-order escrow PDA; the seller is paid
-//! only when the buyer **releases** (confirms delivery), and the buyer can **refund** after a
-//! deadline if the seller never delivered. This is the only Rust in the kit, and it is **not
-//! optional** — every awarded order in the market settles through this program.
+//! A buyer **deposits** SOL into a per-order escrow PDA; the seller is paid only when the buyer
+//! **releases** (confirms delivery), and the buyer can **refund** after a deadline if the seller never
+//! delivered. This is the only Rust in the kit, and it is **not optional** — every order settles here.
+//!
+//! **Asymmetry, stated honestly:** only the **buyer** signs `initialize` / `release` / `refund`. That
+//! protects the *buyer* — funds are conditional and refundable — but the **seller has no on-chain
+//! recourse**: a buyer could take delivery and then refund after the deadline. Making settlement
+//! trustless *both* ways needs an **arbiter** (a third signer) — see `../../contract_extension.md`.
 //!
 //! Security posture (from the solana-dev skill checklist):
 //! - `init` (never `init_if_needed`) — no reinitialization attacks.

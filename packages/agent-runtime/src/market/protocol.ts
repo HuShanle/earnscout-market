@@ -96,12 +96,13 @@ export function formatAward(round: number, to: string, reason?: string): string 
   // doesn't break parsing). The visualizer reads it via reason="…".
   return reason ? `${base} reason="${reason.replace(/"/g, "'")}"` : base
 }
-export function parseAward(text: string): { round: number; to: string } | null {
+export function parseAward(text: string): { round: number; to: string; reason?: string } | null {
   if (verb(text) !== 'AWARD') return null
   const round = num(text, 'round')
   const to = tok(text, 'to')
   if (round == null || !to) return null
-  return { round, to }
+  const reason = text.match(/reason="([^"]*)"/)?.[1] // the quoted justification formatAward emits
+  return { round, to, ...(reason ? { reason } : {}) }
 }
 
 // ── ESCROW_REQUIRED ─────────────────────────────────────────────────────────────
