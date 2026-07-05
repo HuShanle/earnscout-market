@@ -77,7 +77,8 @@ http://127.0.0.1:5173/?session=earnscout-fixture
 
 - The local fixture is deterministic and does not create a fresh live devnet transaction.
 - A live Explorer link for this exact EarnScout service should be added after faucet-funding disposable buyer wallet `mYbXvBhrSY7WUphqB3Ehv3kBgRKm9g9BrPKcGmRoL2p` and running the Docker/CoralOS market.
-- Public GitHub, video, and final Superteam submission still require human approval.
+- Current local blocker: the public devnet faucet returned rate-limit/run-dry errors on July 5, 2026, and Docker is not installed in this environment.
+- Final Superteam submission still requires explicit user authorization.
 
 ## Eligibility Answers
 
