@@ -87,6 +87,12 @@ Prerequisite: fund the generated buyer wallet from `npm run setup` with at least
 The script writes public proof files under `deliverables/devnet-proof/` with the delivery hash, escrow
 PDA, deposit transaction, and release transaction.
 
+Latest generated proof:
+
+- Proof summary: [`deliverables/devnet-proof/earnscout-settlement.md`](deliverables/devnet-proof/earnscout-settlement.md)
+- Deposit tx: [`47nyVrwAhDjQ5KFnMbbEF1y1BRcjReFAvWVCJ8ARLYsk7aTHtAMTsTKB1kr2uNHLfS9t1aE2k1VoFYZ7nMkrTgza`](https://explorer.solana.com/tx/47nyVrwAhDjQ5KFnMbbEF1y1BRcjReFAvWVCJ8ARLYsk7aTHtAMTsTKB1kr2uNHLfS9t1aE2k1VoFYZ7nMkrTgza?cluster=devnet)
+- Release tx: [`2gBTTfpXaogVfah8ZHAsn1eLZ7JPhwRYTxAjJ2iddxDfFzSNuwZ7wLFPDvrchpHLe4NZgaeqA2UDHoERaXFng3PW`](https://explorer.solana.com/tx/2gBTTfpXaogVfah8ZHAsn1eLZ7JPhwRYTxAjJ2iddxDfFzSNuwZ7wLFPDvrchpHLe4NZgaeqA2UDHoERaXFng3PW?cluster=devnet)
+
 ## Project Files
 
 - Service fork point: `examples/txodds/agent/service.ts`

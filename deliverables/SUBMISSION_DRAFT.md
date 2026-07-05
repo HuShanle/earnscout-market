@@ -21,6 +21,7 @@ EarnScout Market lets buyer agents purchase Superteam Earn listing triage from c
 - GitHub: https://github.com/HuShanle/earnscout-market
 - Live Demo: local run instructions in https://github.com/HuShanle/earnscout-market#fast-local-demo
 - Demo Video: https://github.com/HuShanle/earnscout-market/blob/main/deliverables/demo-video/earnscout-demo.webm
+- Devnet Proof: https://github.com/HuShanle/earnscout-market/blob/main/deliverables/devnet-proof/earnscout-settlement.md
 - Docs: https://github.com/HuShanle/earnscout-market/blob/main/deliverables/pitch_deck.md, https://github.com/HuShanle/earnscout-market/blob/main/deliverables/architecture.md
 
 ## What I Built
@@ -73,12 +74,13 @@ http://127.0.0.1:5173/?session=earnscout-fixture
 - `npm run typecheck` in `examples/txodds`: passed.
 - `npm test` in `examples/txodds`: 7 passed.
 - Playwright desktop/mobile rendered checks: passed with no console errors.
+- No-Docker devnet proof: deposit tx `47nyVrwAhDjQ5KFnMbbEF1y1BRcjReFAvWVCJ8ARLYsk7aTHtAMTsTKB1kr2uNHLfS9t1aE2k1VoFYZ7nMkrTgza`; release tx `2gBTTfpXaogVfah8ZHAsn1eLZ7JPhwRYTxAjJ2iddxDfFzSNuwZ7wLFPDvrchpHLe4NZgaeqA2UDHoERaXFng3PW`.
 
 ## Limitations
 
 - The local fixture is deterministic and does not create a fresh live devnet transaction.
-- A live Explorer link for this exact EarnScout service should be added after faucet-funding disposable buyer wallet `mYbXvBhrSY7WUphqB3Ehv3kBgRKm9g9BrPKcGmRoL2p`.
-- Current local blocker: the public devnet faucet returned rate-limit/run-dry errors on July 5, 2026, the buyer wallet balance is `0` SOL, and Docker is not installed in this environment.
+- A live no-Docker Explorer proof for this exact EarnScout service has been generated and linked above.
+- Docker is not installed in this environment, so the full CoralOS multi-container market was not run locally.
 - Docker is not required for the direct EarnScout proof; it is only required for the full CoralOS multi-container market.
 - Final Superteam submission still requires explicit user authorization.
 

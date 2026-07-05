@@ -1,0 +1,60 @@
+{
+  "service": "earnscout-triage",
+  "mode": "no-docker-direct-escrow",
+  "cluster": "devnet",
+  "request": "earnscout imperial-ai-agent-hackathon-build-the-agent-economy",
+  "amountSol": 0.001,
+  "buyer": "mYbXvBhrSY7WUphqB3Ehv3kBgRKm9g9BrPKcGmRoL2p",
+  "seller": "EmQFErd11wzV7eRrdMP6tYmp9d251bJWX3BNVFt1WDQ6",
+  "reference": "EidYbu6XZMTsH8L2kUBDetBSVezLdmNXHtVRDn4hKvZY",
+  "referencePreimage": "earnscout:imperial-ai-agent-hackathon-build-the-agent-economy:0ba79923303a8571aa42e295c138186f8b20cd20dd4174877ebf34612a75c69f:1783248391010",
+  "deliveryHash": "0ba79923303a8571aa42e295c138186f8b20cd20dd4174877ebf34612a75c69f",
+  "delivery": {
+    "service": "earnscout-triage",
+    "listing": {
+      "title": "Imperial AI Agent Hackathon: Build the Agent Economy",
+      "slug": "imperial-ai-agent-hackathon-build-the-agent-economy",
+      "deadline": "2026-07-06T22:59:59.999Z",
+      "reward": "5000 USDG"
+    },
+    "recommendation": "attempt",
+    "confidence": 0.78,
+    "summary": "Build EarnScout Market: an agent-to-agent service where a buyer purchases execution triage and pays the best seller through Solana devnet escrow.",
+    "deliverables": [
+      "Working CoralOS fork with an earnscout deliverService",
+      "Dashboard showing WANT -> BID -> AWARD -> DEPOSITED -> DELIVERED -> RELEASED",
+      "README with one-command local demo path",
+      "Five-slide pitch deck and three-minute video script"
+    ],
+    "risks": [
+      "Deadline pressure requires a narrow MVP",
+      "Hackathon eligibility should be confirmed before final submission",
+      "Devnet keypairs must be disposable and never mainnet-funded"
+    ],
+    "plan": [
+      "Fork the Solana CoralOS starter kit",
+      "Replace the paid service with deterministic listing triage",
+      "Configure seller personas for speed, compliance, and build planning",
+      "Show escrow proof and hash-bound report delivery in the dashboard"
+    ],
+    "safety": [
+      "No real funds, no mainnet RPC, no private user wallet keys",
+      "No protected sponsor or university marks in the UI",
+      "Submission stays dry-run until human approval"
+    ],
+    "timestamp": "2026-07-05T10:46:31.009Z"
+  },
+  "escrow": {
+    "pda": "8HdBkv7sPrN2oxwBTYsvcg9BTnxgf8WxsrgjeG5pQiNe",
+    "explorer": "https://explorer.solana.com/address/8HdBkv7sPrN2oxwBTYsvcg9BTnxgf8WxsrgjeG5pQiNe?cluster=devnet"
+  },
+  "deposit": {
+    "sig": "47nyVrwAhDjQ5KFnMbbEF1y1BRcjReFAvWVCJ8ARLYsk7aTHtAMTsTKB1kr2uNHLfS9t1aE2k1VoFYZ7nMkrTgza",
+    "explorer": "https://explorer.solana.com/tx/47nyVrwAhDjQ5KFnMbbEF1y1BRcjReFAvWVCJ8ARLYsk7aTHtAMTsTKB1kr2uNHLfS9t1aE2k1VoFYZ7nMkrTgza?cluster=devnet"
+  },
+  "release": {
+    "sig": "2gBTTfpXaogVfah8ZHAsn1eLZ7JPhwRYTxAjJ2iddxDfFzSNuwZ7wLFPDvrchpHLe4NZgaeqA2UDHoERaXFng3PW",
+    "explorer": "https://explorer.solana.com/tx/2gBTTfpXaogVfah8ZHAsn1eLZ7JPhwRYTxAjJ2iddxDfFzSNuwZ7wLFPDvrchpHLe4NZgaeqA2UDHoERaXFng3PW?cluster=devnet"
+  },
+  "generatedAt": "2026-07-05T10:46:35.571Z"
+}
