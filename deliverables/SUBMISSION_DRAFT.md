@@ -18,10 +18,10 @@ EarnScout Market lets buyer agents purchase Superteam Earn listing triage from c
 
 ## Links
 
-- GitHub: `TODO_PUBLIC_REPO_URL`
-- Live Demo: `TODO_PUBLIC_DEMO_URL_OR_LOCAL_INSTRUCTIONS`
-- Demo Video: `TODO_DEMO_VIDEO_URL`
-- Docs: `deliverables/pitch_deck.md`, `deliverables/architecture.md`
+- GitHub: https://github.com/HuShanle/earnscout-market
+- Live Demo: local run instructions in https://github.com/HuShanle/earnscout-market#fast-local-demo
+- Demo Video: https://github.com/HuShanle/earnscout-market/blob/main/deliverables/demo-video/earnscout-demo.webm
+- Docs: https://github.com/HuShanle/earnscout-market/blob/main/deliverables/pitch_deck.md, https://github.com/HuShanle/earnscout-market/blob/main/deliverables/architecture.md
 
 ## What I Built
 
@@ -83,9 +83,9 @@ http://127.0.0.1:5173/?session=earnscout-fixture
 
 | Question | Answer |
 |---|---|
-| Link your GitHub Repo | TODO_PUBLIC_REPO_URL |
-| Link your pitch deck | TODO_PUBLIC_PITCH_DECK_URL |
-| Link your demo video | TODO_DEMO_VIDEO_URL |
+| Link your GitHub Repo | https://github.com/HuShanle/earnscout-market |
+| Link your pitch deck | https://github.com/HuShanle/earnscout-market/blob/main/deliverables/pitch_deck.md |
+| Link your demo video | https://github.com/HuShanle/earnscout-market/blob/main/deliverables/demo-video/earnscout-demo.webm |
 
 ## Human Review Checklist
 
