@@ -72,6 +72,21 @@ BUYER_ARG=imperial-ai-agent-hackathon-build-the-agent-economy
 
 No mainnet RPC, private user wallet, real funds, custody, or trading flow is required.
 
+## No-Docker Devnet Proof
+
+If Docker is unavailable, run a direct EarnScout settlement proof from Node. This path skips coral-server,
+but still proves the paid service delivery and Solana devnet deposit -> release flow.
+
+```sh
+cd examples/txodds
+npm install
+SOLANA_RPC_URL=https://docs-demo.solana-devnet.quiknode.pro/ npm run earnscout:settle
+```
+
+Prerequisite: fund the generated buyer wallet from `npm run setup` with at least `0.005` devnet SOL.
+The script writes public proof files under `deliverables/devnet-proof/` with the delivery hash, escrow
+PDA, deposit transaction, and release transaction.
+
 ## Project Files
 
 - Service fork point: `examples/txodds/agent/service.ts`

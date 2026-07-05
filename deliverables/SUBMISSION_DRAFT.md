@@ -47,6 +47,7 @@ WANT -> BID -> AWARD -> DEPOSITED -> DELIVERED -> RELEASED
 - Service: deterministic `deliverService("earnscout <slug>")`.
 - Sellers: speed, compliance, and build-plan personas.
 - Dashboard: local fixture mode plus live feed support.
+- No-Docker proof: `examples/txodds/server/earnscout_settle.ts` can settle an EarnScout delivery directly on Solana devnet.
 - Safety: devnet only; no real funds, no mainnet, no user private keys, no custody.
 
 ## How To Run
@@ -76,8 +77,9 @@ http://127.0.0.1:5173/?session=earnscout-fixture
 ## Limitations
 
 - The local fixture is deterministic and does not create a fresh live devnet transaction.
-- A live Explorer link for this exact EarnScout service should be added after faucet-funding disposable buyer wallet `mYbXvBhrSY7WUphqB3Ehv3kBgRKm9g9BrPKcGmRoL2p` and running the Docker/CoralOS market.
-- Current local blocker: the public devnet faucet returned rate-limit/run-dry errors on July 5, 2026, and Docker is not installed in this environment.
+- A live Explorer link for this exact EarnScout service should be added after faucet-funding disposable buyer wallet `mYbXvBhrSY7WUphqB3Ehv3kBgRKm9g9BrPKcGmRoL2p`.
+- Current local blocker: the public devnet faucet returned rate-limit/run-dry errors on July 5, 2026, the buyer wallet balance is `0` SOL, and Docker is not installed in this environment.
+- Docker is not required for the direct EarnScout proof; it is only required for the full CoralOS multi-container market.
 - Final Superteam submission still requires explicit user authorization.
 
 ## Eligibility Answers

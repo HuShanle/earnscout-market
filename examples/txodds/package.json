@@ -8,6 +8,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "earnscout:settle": "tsx server/earnscout_settle.ts",
     "mint": "tsx server/mint.ts",
     "proxy": "tsx server/proxy.ts",
     "web": "npx --yes serve web -l 3020",
