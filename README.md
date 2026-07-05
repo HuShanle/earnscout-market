@@ -100,6 +100,7 @@ Latest generated proof:
 - Market launcher: `examples/marketplace/start.ts`
 - Seller/buyer manifests: `coral-agents/seller-agent`, `coral-agents/buyer-agent`
 - Screenshots and submission materials: `workspaces/imperial-ai-agent-hackathon-build-the-agent-economy/deliverables`
+- Operator guide: `deliverables/OPERATOR_GUIDE.md`
 
 ## Original Starter Kit
 
