@@ -1,10 +1,10 @@
 /**
  * Marketplace starter — the headline example.
  *
- * Launches one session graph: a market buyer + three LLM seller personas. coral-server spawns each
- * as a container; the buyer broadcasts a WANT, the sellers compete with LLM bids, and the winner is
- * settled through the escrow contract. All sellers reuse the seller-agent image and share the receive
- * wallet — differentiation is persona/floor/inventory (set in each coral-agent.toml), not code.
+ * Launches one session graph: a market buyer + three seller personas. coral-server spawns each as a
+ * container; the buyer broadcasts a WANT for EarnScout triage, the sellers compete with bids, and the
+ * winner is settled through the escrow contract. All sellers reuse the seller-agent image and share
+ * the receive wallet - differentiation is persona/floor/inventory, not code.
  *
  *   CORAL_SERVER_URL  default http://localhost:5555
  *   CORAL_TOKEN       default dev   (must be in coral.toml [auth] keys)
@@ -63,28 +63,15 @@ async function main() {
   if (env.LLM_MODEL) llmOpts.LLM_MODEL = str(env.LLM_MODEL)
   if (trace) llmOpts.TRACE = str(trace)
 
-  // The market sells one verified product: a TxODDS World Cup read (the `txline` service). Generic
-  // services (coingecko/jupiter/news) are no longer routed — the seller image only delivers txline —
-  // so the market needs a free devnet TxLINE token to have anything to sell.
-  const txlineKey = env.TXLINE_API_KEY
-  if (!txlineKey) {
-    throw new Error(
-      'TXLINE_API_KEY missing — this market sells verified TxODDS World Cup data. Mint a free devnet ' +
-      'token with `npm run mint` in examples/txodds, then re-run `npm start`.',
-    )
-  }
-
-  // Every seller is a txline seller sharing the receive wallet + token; they compete on persona/floor
-  // (set per coral-agent.toml), not code. The buyer awards best value and settles the winner via escrow.
-  const seller = (name: string) =>
+  // Every seller carries the earnscout service. They compete on persona/floor, not code.
+  const seller = (name: string, persona: string, floorSol: number) =>
     agent(name, {
       SELLER_WALLET: str(wallet), SOLANA_RPC_URL: str(rpc), AGENT_NAME: str(name),
-      SERVICES: str('txline'), TXLINE_API_KEY: str(txlineKey),
-      ...(env.TXLINE_BASE_URL ? { TXLINE_BASE_URL: str(env.TXLINE_BASE_URL) } : {}),
+      SERVICES: str('earnscout'), SERVICE: str('earnscout'), FLOOR_SOL: f64(floorSol), PERSONA: str(persona),
       ...llmOpts,
     })
 
-  const sellers = ['seller-worldcup', 'seller-cheap', 'seller-premium']
+  const sellers = ['speed-scout', 'compliance-scout', 'build-scout']
 
   // Optional broker swarm (ENABLE_BROKER=1, see coral-agents/broker/README.md): the buyer buys from a
   // broker, which resells from the real sellers. Needs a funded broker wallet + seller receive wallets —
@@ -109,8 +96,8 @@ async function main() {
   // The buyer shops for the txline read. `fixtures` always returns data; override with BUYER_ARG (e.g.
   // `edge <fixtureId>` for the headline read) or BUYER_ARGS (a csv rotated one per round) once you have
   // a live fixture id.
-  const buyerService = env.BUYER_SERVICE ?? 'txline'
-  const buyerArg = env.BUYER_ARG ?? 'fixtures'
+  const buyerService = env.BUYER_SERVICE ?? 'earnscout'
+  const buyerArg = env.BUYER_ARG ?? 'imperial-ai-agent-hackathon-build-the-agent-economy'
   const buyerArgs = env.BUYER_ARGS ?? ''
 
   const buyerOpts: Record<string, unknown> = {
@@ -138,9 +125,9 @@ async function main() {
       agentGraphRequest: {
         agents: [
           agent('buyer-agent', buyerOpts),
-          seller('seller-worldcup'),
-          seller('seller-cheap'),
-          seller('seller-premium'),
+          seller('speed-scout', 'a fast triage seller that bids low and returns concise listing summaries', 0.00018),
+          seller('compliance-scout', 'a compliance-first seller that checks eligibility, KYC, wallet, IP, and fund-handling risk before build planning', 0.00042),
+          seller('build-scout', 'an implementation planner that turns accepted listings into scoped build plans and validation paths', 0.00035),
           ...brokerAgents,
         ],
       },
@@ -152,9 +139,9 @@ async function main() {
   const { sessionId } = await sres.json() as { sessionId: string }
 
   const lineup = brokerReady ? `broker (reselling ${sellers.join(', ')})` : sellers.join(', ')
-  console.log(`\n✅ Market session ${sessionId} — buyer + ${lineup}.`)
+  console.log(`\n✅ EarnScout market session ${sessionId} — buyer + ${lineup}.`)
   console.log(`   receive wallet: ${wallet}`)
-  console.log('   The buyer broadcasts a WANT; sellers bid; the winner settles via escrow.\n')
+  console.log('   The buyer broadcasts a WANT for listing triage; sellers bid; the winner settles via escrow.\n')
   console.log('   Watch the market:')
   console.log('     docker logs -f buyer-agent      # WANT → AWARD (with a reason) → DEPOSITED → RELEASED')
   console.log('     docker logs -f seller-cheap     # BID → ESCROW_REQUIRED → DELIVERED')

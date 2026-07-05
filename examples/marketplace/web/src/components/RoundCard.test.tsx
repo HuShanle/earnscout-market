@@ -6,23 +6,23 @@ import { settledRound } from '../../tests/fixtures'
 afterEach(cleanup)
 
 describe('RoundCard', () => {
-  it('renders the want, both bids, and the declined seller', () => {
+  it('renders the want, seller bids, and the declined seller', () => {
     render(<RoundCard round={settledRound} />)
     expect(screen.getByTestId('round').getAttribute('data-round')).toBe('1')
-    expect(screen.getAllByTestId('bid')).toHaveLength(2)
-    expect(screen.getByTestId('declined').getAttribute('data-seller')).toBe('seller-lazy')
+    expect(screen.getAllByTestId('bid')).toHaveLength(3)
+    expect(screen.getByTestId('declined').getAttribute('data-seller')).toBe('copy-scout')
   })
 
   it('highlights the winning bid with a "won" tag', () => {
     render(<RoundCard round={settledRound} />)
-    const winner = screen.getAllByTestId('bid').find((el) => el.getAttribute('data-seller') === 'seller-premium')!
+    const winner = screen.getAllByTestId('bid').find((el) => el.getAttribute('data-seller') === 'compliance-scout')!
     expect(winner.className).toContain('bid-won')
     expect(within(winner).getByText('won')).toBeTruthy()
   })
 
   it('shows the LLM award reasoning', () => {
     render(<RoundCard round={settledRound} />)
-    expect(screen.getByTestId('reason').textContent).toContain('verified data worth the premium')
+    expect(screen.getByTestId('reason').textContent).toContain('eligibility, safety, and devnet proof')
   })
 
   it('links deposit + release to the devnet Explorer with the right sigs', () => {
@@ -35,5 +35,10 @@ describe('RoundCard', () => {
   it('shows the status pill as settled', () => {
     render(<RoundCard round={settledRound} />)
     expect(screen.getByTestId('status').textContent).toBe('settled')
+  })
+
+  it('renders the delivered EarnScout report', () => {
+    render(<RoundCard round={settledRound} />)
+    expect(screen.getByTestId('earnscout-report').textContent).toContain('Build EarnScout Market')
   })
 })

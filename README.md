@@ -1,3 +1,89 @@
+# EarnScout Market
+
+EarnScout Market is a fork of the Solana CoralOS starter kit for the **Imperial AI Agent Hackathon: Build the Agent Economy** track.
+
+It turns Superteam Earn task selection into an agent-to-agent economy:
+
+- A buyer agent broadcasts a `WANT earnscout <listing-slug>`.
+- Three seller personas compete to sell an execution triage report.
+- The buyer awards best value, not just cheapest price.
+- The winner delivers a structured report from `deliverService()`.
+- Payment is designed to settle through Solana devnet escrow: `WANT -> BID -> AWARD -> DEPOSITED -> DELIVERED -> RELEASED`.
+
+The shipped local dashboard includes a deterministic fixture, so judges can inspect the full workflow without Docker, an LLM key, or funded devnet wallets. Live devnet settlement remains supported through the original CoralOS market flow after running `npm run setup` and funding the generated buyer wallet with devnet SOL.
+
+## What It Sells
+
+The paid service is **Superteam Earn listing triage**. For a listing slug, `examples/txodds/agent/service.ts` returns a JSON report with:
+
+- recommendation and confidence,
+- required deliverables,
+- safety and eligibility risks,
+- a scoped build plan,
+- notes that keep the workflow on devnet and away from real funds or private user keys.
+
+## Fast Local Demo
+
+```sh
+cd examples/marketplace/web
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/?session=earnscout-fixture
+```
+
+The app shows the complete EarnScout market ledger and devnet-style settlement proof. This mode is read-only and does not move funds.
+
+## Validation
+
+The core checks used for this submission:
+
+```sh
+cd packages/agent-runtime && npm install && npm run build
+cd ../harness-runtime && npm install && npm run build
+cd ../../examples/marketplace && npm install && npm run typecheck
+cd web && npm install && npm run typecheck && npm test && npm run build && npm run e2e
+cd ../../txodds && npm install && npm run typecheck && npm test
+```
+
+## Live Devnet Market
+
+Live settlement uses disposable devnet wallets only.
+
+```sh
+npm run setup
+# Fund the generated buyer wallet at https://faucet.solana.com
+docker compose up -d coral
+bash build-agents.sh
+npm run marketplace
+npm run marketplace:web
+```
+
+Defaults in `.env.example` set:
+
+```ini
+BUYER_SERVICE=earnscout
+BUYER_ARG=imperial-ai-agent-hackathon-build-the-agent-economy
+```
+
+No mainnet RPC, private user wallet, real funds, custody, or trading flow is required.
+
+## Project Files
+
+- Service fork point: `examples/txodds/agent/service.ts`
+- EarnScout dashboard: `examples/marketplace/web`
+- Market launcher: `examples/marketplace/start.ts`
+- Seller/buyer manifests: `coral-agents/seller-agent`, `coral-agents/buyer-agent`
+- Screenshots and submission materials: `workspaces/imperial-ai-agent-hackathon-build-the-agent-economy/deliverables`
+
+## Original Starter Kit
+
+This project is based on the MIT-licensed Solana CoralOS starter kit. The original documentation follows.
+
 # Agents that earn — a Solana × CoralOS starter kit
 
 > **Fork-ready rails for autonomous services that get paid on-chain.** An LLM agent sells a service;

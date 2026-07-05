@@ -1,71 +1,120 @@
 /**
- * `deliverService()` — THE fork point. This is the one function you replace to sell your own thing.
+ * `deliverService()` - THE fork point.
  *
- * A seller gets a paid request and returns the string the buyer paid for. The default body below sells
- * verified TxLINE World Cup data (fixtures / odds / an LLM "edge" read) — that's just the demo that
- * proves the rails. To build your own agent economy, return your own value here (ad copy, a research
- * brief, a routed job, a verified fact), give the seller a persona (`coral-agent.toml`), and tell the
- * buyer how to value bids. The escrow, market, Solana Pay, and LLM shim don't change.
+ * EarnScout Market sells a concrete agent service: execution triage for Superteam Earn listings.
+ * A buyer agent pays for a short, structured report before deciding whether to build. Seller agents
+ * compete on price, speed, and compliance depth; the winning delivery is hash-bound to the escrow
+ * reference and released on Solana devnet.
  *
- * The live web demo serves this same transform through the proxy (`server/proxy.ts` → `/api/edge`) via
- * `analyzeEdge()` in `agent/edge.ts`; this module is the standalone, minimal version — read it to
- * understand the shape, then wire your delivery in as `case 'yourservice': return deliverYours(payload)`.
- *
- * Request grammar (the buyer's request string after the service keyword):
- *   "fixtures"          -> upcoming World Cup / Int Friendlies fixtures              (data only)
- *   "odds <fixtureId>"  -> de-margined StablePrice odds for a fixture                (data only)
- *   "edge <fixtureId>"  -> odds + fair (break-even) odds + an LLM read               (the full loop)
- *
- * Pillars in play (all reusable for your own service):
- *   - Data     verified TxLINE fixtures/odds, fetched on devnet (TxLineClient).
- *   - LLM      turns raw data into a sellable insight (Venice AI via `analyzeEdge` → `complete()`).
- *   - Solana   the buyer escrow settles delivery on-chain (see ../server/proxy.ts `/api/settle`).
+ * Request grammar:
+ *   "earnscout <listing-slug>" -> execution triage report for that listing
+ *   "<listing-slug>"           -> same as above, for one-token calls from simple buyers
  */
-import { TxLineClient } from './txline.js'
-import { analyzeEdge } from './edge.js'
+
+interface TriageReport {
+  service: 'earnscout-triage'
+  listing: {
+    title: string
+    slug: string
+    deadline: string
+    reward: string
+  }
+  recommendation: 'attempt' | 'watch' | 'reject'
+  confidence: number
+  summary: string
+  deliverables: string[]
+  risks: string[]
+  plan: string[]
+  safety: string[]
+  timestamp: string
+}
+
+const LISTINGS: Record<string, Omit<TriageReport, 'service' | 'timestamp'>> = {
+  'imperial-ai-agent-hackathon-build-the-agent-economy': {
+    listing: {
+      title: 'Imperial AI Agent Hackathon: Build the Agent Economy',
+      slug: 'imperial-ai-agent-hackathon-build-the-agent-economy',
+      deadline: '2026-07-06T22:59:59.999Z',
+      reward: '5000 USDG',
+    },
+    recommendation: 'attempt',
+    confidence: 0.78,
+    summary:
+      'Build EarnScout Market: an agent-to-agent service where a buyer purchases execution triage and pays the best seller through Solana devnet escrow.',
+    deliverables: [
+      'Working CoralOS fork with an earnscout deliverService',
+      'Dashboard showing WANT -> BID -> AWARD -> DEPOSITED -> DELIVERED -> RELEASED',
+      'README with one-command local demo path',
+      'Five-slide pitch deck and three-minute video script',
+    ],
+    risks: [
+      'Deadline pressure requires a narrow MVP',
+      'Hackathon eligibility should be confirmed before final submission',
+      'Devnet keypairs must be disposable and never mainnet-funded',
+    ],
+    plan: [
+      'Fork the Solana CoralOS starter kit',
+      'Replace the paid service with deterministic listing triage',
+      'Configure seller personas for speed, compliance, and build planning',
+      'Show escrow proof and hash-bound report delivery in the dashboard',
+    ],
+    safety: [
+      'No real funds, no mainnet RPC, no private user wallet keys',
+      'No protected sponsor or university marks in the UI',
+      'Submission stays dry-run until human approval',
+    ],
+  },
+}
+
+const fallback = (slug: string): Omit<TriageReport, 'service' | 'timestamp'> => ({
+  listing: {
+    title: slug.split('-').filter(Boolean).map((part) => `${part[0].toUpperCase()}${part.slice(1)}`).join(' ') || 'Unknown listing',
+    slug,
+    deadline: 'unknown',
+    reward: 'unknown',
+  },
+  recommendation: 'watch',
+  confidence: 0.52,
+  summary:
+    'EarnScout can produce an initial execution triage, but this listing needs full details before build commitment.',
+  deliverables: [
+    'Fetch full listing details',
+    'Score agent eligibility and hard risks',
+    'Produce a build plan only after triage passes',
+  ],
+  risks: [
+    'Listing details were not embedded in this demo fixture',
+    'Eligibility and payout requirements are unknown',
+  ],
+  plan: [
+    'Run the Superteam Agent details endpoint',
+    'Fill TRIAGE_REPORT.md and LISTING_SCORE.json',
+    'Stop if capital, KYC, private keys, or real trading are required',
+  ],
+  safety: [
+    'Read-only triage only until the human approves build and submission',
+    'No real wallet keys or funds are requested',
+  ],
+})
 
 export async function deliverService(request: string): Promise<string> {
   const tokens = request.trim().split(/\s+/).filter(Boolean)
-  // A bare fixture id (single numeric token) is treated as `edge <id>` — the on-thesis product (so a
-  // caller can pass just a fixture id, e.g. "17588245").
-  let verb = (tokens[0] ?? 'fixtures').toLowerCase()
+  let verb = (tokens[0] ?? 'earnscout').toLowerCase()
   let rest = tokens.slice(1)
-  if (/^\d+$/.test(verb)) { rest = [verb]; verb = 'edge' }
-  const client = new TxLineClient()
-
-  try {
-    switch (verb) {
-      case 'fixtures': {
-        const fixtures = await client.fixtures()
-        return JSON.stringify({
-          service: 'txline-fixtures',
-          count: fixtures.length,
-          fixtures: fixtures.slice(0, 10),
-          timestamp: new Date().toISOString(),
-        })
-      }
-
-      case 'odds': {
-        const fixtureId = Number(rest[0])
-        if (!fixtureId) return JSON.stringify({ error: 'usage: odds <fixtureId>' })
-        const odds = await client.odds(fixtureId)
-        return JSON.stringify({ service: 'txline-odds', fixtureId, odds, timestamp: new Date().toISOString() })
-      }
-
-      // The on-thesis product: verified data in, LLM-shaped insight out, paid in SOL.
-      case 'edge': {
-        const fixtureId = Number(rest[0])
-        if (!fixtureId) return JSON.stringify({ error: 'usage: edge <fixtureId>' })
-        const [odds, fixtures] = await Promise.all([client.odds(fixtureId), client.fixtures()])
-        const edge = await analyzeEdge({ fixtureId, odds, fixtures }) // shared with the web proxy's /api/edge
-        return JSON.stringify({ service: 'txline-edge', ...edge, timestamp: new Date().toISOString() })
-      }
-
-      default:
-        return JSON.stringify({ error: `unknown txline verb: ${verb} (try: fixtures | odds | edge)` })
-    }
-  } catch (e) {
-    // Match the kit convention: failures come back as a string the buyer can read, not a throw.
-    return JSON.stringify({ error: `txline delivery failed: ${(e as Error).message}` })
+  if (verb !== 'earnscout') {
+    rest = [verb, ...rest]
+    verb = 'earnscout'
   }
+
+  if (verb !== 'earnscout') {
+    return JSON.stringify({ error: `unknown service: ${verb}` })
+  }
+
+  const slug = rest.join(' ') || 'imperial-ai-agent-hackathon-build-the-agent-economy'
+  const report = LISTINGS[slug] ?? fallback(slug)
+  return JSON.stringify({
+    service: 'earnscout-triage',
+    ...report,
+    timestamp: new Date().toISOString(),
+  } satisfies TriageReport)
 }

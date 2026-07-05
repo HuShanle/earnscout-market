@@ -5,16 +5,19 @@ export interface RoundBid {
   by: string
   priceSol: number
   note?: string
+  etaMins?: number
+  qualityScore?: number
+  risk?: 'low' | 'medium' | 'high'
 }
 
 export type RoundStatus = 'bidding' | 'awarded' | 'deposited' | 'delivered' | 'settled' | 'refunded'
 
 export interface Round {
   round: number
-  want?: { service: string; arg: string; budgetSol: number }
+  want?: { service: string; arg: string; budgetSol: number; buyer?: string; objective?: string }
   bids: RoundBid[]
   declined: string[]
-  award?: { to: string; reason?: string }
+  award?: { to: string; reason?: string; scorecard?: { label: string; value: number }[] }
   escrow?: { reference: string; seller: string; amountSol: number; deadlineSecs: number }
   deposit?: { sig: string; buyer: string }
   delivered?: { raw: string; data?: unknown }

@@ -3,6 +3,7 @@ import { StatusPill } from './StatusPill'
 import { BidRow, DeclinedRow } from './BidRow'
 import { SettlementBadge } from './SettlementBadge'
 import { WorldCupPanel } from './WorldCupPanel'
+import { EarnScoutPanel } from './EarnScoutPanel'
 
 /** One auction round: the need, the competing bids, the award + reasoning, and on-chain settlement. */
 export function RoundCard({ round }: { round: Round }) {
@@ -10,7 +11,7 @@ export function RoundCard({ round }: { round: Round }) {
   return (
     <article className="round" data-testid="round" data-round={round.round}>
       <header className="round-head">
-        <span className="round-n">#{round.round}</span>
+        <span className="round-n">Round {round.round}</span>
         {round.want && (
           <span className="round-want">
             <strong>{round.want.service}</strong> {round.want.arg}
@@ -30,14 +31,26 @@ export function RoundCard({ round }: { round: Round }) {
       </div>
 
       {round.award?.reason && (
-        <p className="reason" data-testid="reason">
-          <em>“{round.award.reason}”</em>
-        </p>
+        <section className="decision" data-testid="reason">
+          <div>
+            <span className="decision-label">Buyer decision</span>
+            <p>{round.award.reason}</p>
+          </div>
+          {round.award.scorecard && (
+            <div className="scorecard">
+              {round.award.scorecard.map((score) => (
+                <span key={score.label}>{score.label}<strong>{score.value}</strong></span>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {round.delivered && (
         (round.delivered.data as { service?: string } | undefined)?.service === 'txline-edge'
           ? <WorldCupPanel edge={round.delivered.data as Parameters<typeof WorldCupPanel>[0]['edge']} />
+          : (round.delivered.data as { service?: string } | undefined)?.service === 'earnscout-triage'
+            ? <EarnScoutPanel report={round.delivered.data as Parameters<typeof EarnScoutPanel>[0]['report']} />
           : <pre className="delivered" data-testid="delivered">{round.delivered.raw}</pre>
       )}
 

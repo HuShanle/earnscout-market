@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Feed } from './types'
+import { DEMO_SESSION, fixtureRounds } from './demoData'
 
 const FEED_URL = import.meta.env.VITE_FEED_URL ?? 'http://localhost:4000'
 
@@ -9,6 +10,14 @@ export async function startMarket(): Promise<string> {
   const body = (await r.json()) as { session?: string; error?: string }
   if (!r.ok || !body.session) throw new Error(body.error ?? `start failed (${r.status})`)
   return body.session
+}
+
+export function localDemoFeed(): Feed {
+  return {
+    session: DEMO_SESSION,
+    rounds: fixtureRounds,
+    updatedAt: new Date().toISOString(),
+  }
 }
 
 export interface FeedState {
@@ -27,6 +36,11 @@ export function useFeed(session: string, intervalMs = 1000): FeedState {
 
   useEffect(() => {
     stop.current = false
+    if (session === DEMO_SESSION || session === 'fixture') {
+      const feed = localDemoFeed()
+      setState({ rounds: feed.rounds, connected: true })
+      return
+    }
     if (!session) {
       setState({ rounds: [], connected: false, error: 'no session' })
       return

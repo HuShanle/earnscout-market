@@ -1,16 +1,28 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { DEMO_SESSION } from './demoData'
 import { useFeed, startMarket } from './api'
 import { MarketView } from './components/MarketView'
 import { Explainer } from './components/Explainer'
 
-/** Read ?session=<id> from the URL so the launcher can deep-link straight to a live market. */
-const initialSession = new URLSearchParams(window.location.search).get('session') ?? ''
+const initialSession = new URLSearchParams(window.location.search).get('session') ?? DEMO_SESSION
 
 export default function App() {
   const [session, setSession] = useState(initialSession)
   const [starting, setStarting] = useState(false)
   const [startErr, setStartErr] = useState<string>()
   const { rounds, connected, error } = useFeed(session)
+
+  const settled = useMemo(() => rounds.filter((round) => round.status === 'settled').length, [rounds])
+  const totalBids = useMemo(() => rounds.reduce((sum, round) => sum + round.bids.length, 0), [rounds])
+  const latest = rounds[0]
+
+  function loadDemo() {
+    setStartErr(undefined)
+    setSession(DEMO_SESSION)
+    const url = new URL(window.location.href)
+    url.searchParams.set('session', DEMO_SESSION)
+    window.history.replaceState({}, '', url)
+  }
 
   async function onStart() {
     setStarting(true)
@@ -31,30 +43,55 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-head">
-        <h1>The Agent Marketplace</h1>
-        <span className="sub">LLM agents compete on CoralOS · settled by Solana escrow</span>
-        <span className={`dot ${connected ? 'dot-on' : 'dot-off'}`} data-testid="conn" title={connected ? 'connected' : (error ?? 'disconnected')} />
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">E</span>
+          <div>
+            <h1>EarnScout Market</h1>
+            <p>Agents buy execution triage, sellers compete, escrow releases on delivery.</p>
+          </div>
+        </div>
+        <div className="head-actions">
+          <span className={`dot ${connected ? 'dot-on' : 'dot-off'}`} data-testid="conn" title={connected ? 'connected' : (error ?? 'disconnected')} />
+          <button className="ghost" onClick={loadDemo}>Load demo ledger</button>
+          <button className="primary" onClick={onStart} disabled={starting} data-testid="start">
+            {starting ? 'Starting...' : 'Start live devnet market'}
+          </button>
+        </div>
       </header>
+
+      {startErr && <p className="start-err" data-testid="start-err">{startErr}</p>}
+
+      <section className="summary-grid" aria-label="market summary">
+        <div className="summary-card">
+          <span className="summary-label">Service sold</span>
+          <strong>Listing triage report</strong>
+          <small>{latest?.want?.arg ?? 'No active order'}</small>
+        </div>
+        <div className="summary-card">
+          <span className="summary-label">Auction depth</span>
+          <strong>{totalBids} bids</strong>
+          <small>{rounds.length} market rounds in ledger</small>
+        </div>
+        <div className="summary-card">
+          <span className="summary-label">Settlement</span>
+          <strong>{settled} released</strong>
+          <small>Solana devnet escrow only</small>
+        </div>
+      </section>
 
       <div className="session-bar">
         <input
           aria-label="session id"
-          placeholder="paste a market session id…"
+          placeholder="paste a market session id"
           value={session}
           onChange={(e) => setSession(e.target.value.trim())}
         />
-        <button onClick={onStart} disabled={starting} data-testid="start">
-          {starting ? 'starting…' : 'Start a market'}
-        </button>
       </div>
-      {startErr && <p className="start-err" data-testid="start-err">{startErr}</p>}
 
       <Explainer />
 
       <main>
-        {session ? <MarketView rounds={rounds} /> : (
-          <p className="empty">Fund your wallets, then <strong>Start a market</strong> — agents will bid and settle live.</p>
-        )}
+        <MarketView rounds={rounds} />
       </main>
     </div>
   )
